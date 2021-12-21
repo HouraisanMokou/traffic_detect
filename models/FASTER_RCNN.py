@@ -14,6 +14,7 @@ class Faster_RCNN(nn.Module):
 
     # def forward(self):
     def __init__(self, classes, args):
+        super(Faster_RCNN,self).__init__()
         self.classes = classes
         self.n_classes = len(classes)
 
