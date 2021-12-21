@@ -18,8 +18,13 @@ class Faster_RCNN(nn.Module):
         self.classes = classes
         self.n_classes = len(classes)
 
+        # args
+        self.dropout_rate = args.dropout_rate
+
         # base
-        self.base = ResNet()
+        if args.base_name=='ResNet50':
+            self.base = ResNet.ResNet50(self.n_classes)
+        #self.base = ResNet.ResNet101(self.n_classes)
 
         # rpn
         self.rpn = RPN()
@@ -36,8 +41,6 @@ class Faster_RCNN(nn.Module):
         self.cross_entropy = None
         self.loss_box = None
 
-        # args
-        self.dropout_rate = args.dropout_rate
 
     def loss(self):
         return self.cross_entropy + self.loss_box * 10
@@ -51,7 +54,7 @@ class Faster_RCNN(nn.Module):
         im_data, im_info, gt_boxes, num_boxes = \
             feed_dicts['im_data'], feed_dicts['im_info'], feed_dicts['gt_boxes'], feed_dicts['num_box']
 
-        feats = self.base(im_data, im_info, gt_boxes, num_boxes)
+        feats = self.base(im_data)
 
         rois = self.rpn(feats)
 
