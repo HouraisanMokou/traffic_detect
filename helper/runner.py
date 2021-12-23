@@ -30,6 +30,11 @@ class Runner():
 
         self.optimizer = None
 
+    def evaluate(self,phase,file_name):
+        self.model.load_state_dict(torch.load(file_name))
+        ap,t=self.predict(phase)
+        logger.info('test on model[{}]: ap[{}], time[{}]'.format(file_name,ap, t))
+
     def train(self):
         logger.info('start to train')
         self.model.to(self.device)
@@ -42,6 +47,7 @@ class Runner():
             logger.info('epoch {}: loss[{}], used time[{}]'.format(epoch, batch_loss, used_time))
             if self.test_epoch != -1 and epoch % self.test_epoch == 0:
                 ap, t = self.predict('val')
+                logger.info('[test on val in epoch {}: ap[{}], time[{}]]'.format(epoch, ap, t))
                 eval_list.append((ap,t))
                 # terminal if test ap is continuously go down
                 if self.terminal(eval_list):

@@ -95,7 +95,7 @@ def main(args):
         runner.train()
     else:
         logger.info('start to test')
-        runner.evaluate(reader.val,args.best_checkpoint)
+        runner.evaluate('test',args.best_checkpoint)
 
 
 
