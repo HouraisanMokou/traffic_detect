@@ -61,6 +61,8 @@ class Faster_RCNN(nn.Module):
         if self.training:
             rois_data = self.proposal_target(rois, gt_boxes, num_boxes)
             rois, rois_label, rois_target, roi_inside_ws, roi_outside_ws = rois_data
+        else:
+            rois_data=None
 
         # roi pool
         feats_pooled = self.roi_pool(feats, rois)
@@ -77,4 +79,4 @@ class Faster_RCNN(nn.Module):
         cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
-        return cls_prob, bbox_pred, rois
+        return cls_prob, bbox_pred, rois_data
