@@ -1,3 +1,5 @@
+import torch
+
 from models.roi.roi import ROI
 from models.rpn.rpn import RPN
 from models.rpn.proposal_target import RPN_PROPOSAL_TARGET
@@ -17,6 +19,7 @@ class Faster_RCNN(nn.Module):
         super(Faster_RCNN,self).__init__()
         self.classes = classes
         self.n_classes = len(classes)
+        self.device=args.device
 
         # args
         self.dropout_rate = args.dropout_rate
@@ -74,9 +77,31 @@ class Faster_RCNN(nn.Module):
         bbox_pred = self.linear_bbox_pred(feats_linear)
 
         if self.training:
-            self.cross_entropy, self.loss_box = self.build_loss(cls_prob, bbox_pred, rois_data)
+            self.cal_loss(cls_prob, bbox_pred, rois_data)
 
         cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
         return cls_prob, bbox_pred, rois_data
+
+    def cal_loss(self,cls_prob, bbox_pred, rois_data):
+        # this line may change
+        rpn_loss_cls=cls_prob.permute(0,2,3,1).contiguous().view(-1,2)
+
+        rpn_label=rois_data[1]
+        rpn_keep=Variable(rpn_label.data.ne(-1).nonzero().squeeze()).to(self.device)
+        cls_prob,rpn_label=torch.index_select(cls_prob,0,rpn_keep),torch.index_select(rpn_label,0,rpn_keep)
+
+        fg_cnt=torch.sum(rpn_label.data.ne(0))
+
+        rpn_cross_entropy=F.cross_entropy(cls_prob,rpn_label)
+
+        bbox_target,inside_ws,out_side_ws=rois_data[2:]
+        bbox_target,bbox_pred=torch.mul(bbox_target,inside_ws),torch.mul(bbox_pred,inside_ws)
+
+        rpn_loss_bbox=F.smooth_l1_loss(bbox_pred,bbox_target,size_average=False)/(fg_cnt+1e-8)
+
+        self.cross_entropy=rpn_cross_entropy
+        self.loss_box=rpn_loss_bbox
+
+

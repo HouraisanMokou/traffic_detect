@@ -15,7 +15,7 @@ class Runner():
     run, methods of training and testing
     """
 
-    def __init__(self, args, reader, model):
+    def __init__(self, args, reader: Reader, model):
         self.reader = reader
         self.epoches = args.epoch
         self.test_epoch = args.test_epoch
@@ -30,10 +30,10 @@ class Runner():
 
         self.optimizer = None
 
-    def evaluate(self,phase,file_name):
+    def evaluate(self, phase, file_name):
         self.model.load_state_dict(torch.load(file_name))
-        ap,t=self.predict(phase)
-        logger.info('test on model[{}]: ap[{}], time[{}]'.format(file_name,ap, t))
+        ap, t = self.predict(phase)
+        logger.info('test on model[{}]: ap[{}], time[{}]'.format(file_name, ap, t))
 
     def train(self):
         logger.info('start to train')
@@ -48,7 +48,7 @@ class Runner():
             if self.test_epoch != -1 and epoch % self.test_epoch == 0:
                 ap, t = self.predict('val')
                 logger.info('[test on val in epoch {}: ap[{}], time[{}]]'.format(epoch, ap, t))
-                eval_list.append((ap,t))
+                eval_list.append((ap, t))
                 # terminal if test ap is continuously go down
                 if self.terminal(eval_list):
                     break
@@ -114,7 +114,7 @@ class Runner():
                 batch_cnt += 1
         return total_ap / batch_cnt if has_gt else -1, time.time() - t1
 
-    def terminal(self,eval_list):
+    def terminal(self, eval_list):
         last = -np.inf
         for i in range(len(eval_list)):
             if i == self.stop:
