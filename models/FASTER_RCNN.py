@@ -12,6 +12,7 @@ from torch.autograd import Variable
 class Faster_RCNN(nn.Module):
     """
     faster-RCNN structure
+    classes, contain classes with signs(start form 1), and background with index 0
     """
 
     # def forward(self):
@@ -59,7 +60,7 @@ class Faster_RCNN(nn.Module):
 
         feats = self.base(im_data)
 
-        rois = self.rpn(feats)
+        rois = self.rpn(feats,im_info, gt_boxes, num_boxes)
 
         if self.training:
             rois_data = self.proposal_target(rois, gt_boxes, num_boxes)

@@ -17,7 +17,7 @@ def get_args():
     parser.add_argument('--checkpoints_directory', type=str, default='./checkpoints', help='checkpoints directory')
 
     parser.add_argument('--best_checkpoint', type=bool, default=False, help='checkpoint to test')
-    parser.add_argument('--dataset_name', type=str, default='archive', help='the name of data set')
+    parser.add_argument('--dataset_name', type=str, default='tt100k_2021', help='the name of data set')
     parser.add_argument('--base_name',type=str,default='ResNet50',help='the basic bone of Faster-RCNN')
     # the path of data set should be {data_directory}/{dataset_name}
     # the model would be saved to {checkpoints_directory}/{base_name}_{dataset_name}/{current epoch}
