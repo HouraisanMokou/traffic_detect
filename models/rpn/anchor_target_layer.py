@@ -117,8 +117,8 @@ class anchor_target_layer(nn.Module):
             offset.view(batch_size, 1).type_as(argmax_overlaps)
         bbox_targets = _compute_targets_batch(
             anchors, gt_boxes.view(-1, 5)[argmax_overlaps.view(-1), :].view(batch_size, -1, 5))
-
-        bbox_inside_weights[labels == 1] = args.TRAIN.RPN_BBOX_INSIDE_WEIGHTS[0]
+        RPN_BBOX_INSIDE_WEIGHTS=(1.0, 1.0, 1.0, 1.0)
+        bbox_inside_weights[labels == 1] = RPN_BBOX_INSIDE_WEIGHTS[0]
 
         if args.TRAIN.RPN_POSITIVE_WEIGHT < 0:
             num_examples = torch.sum(labels[i] >= 0)
