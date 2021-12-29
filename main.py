@@ -43,6 +43,23 @@ def get_args():
 
     # arguments for models
     parser.add_argument('--dropout_rate', type=float, default=0.2, help='the drop out rate of linear layers')
+    
+    # rpn arguments
+    parser.add_argument('--TRAIN.RPN_POSITIVE_WEIGHT', type=float, default=-1.0, help='')
+    parser.add_argument('--USE_GPU_NMS', type=bool, default=True, help='')
+    parser.add_argument('--TRAIN.RPN_PRE_NMS_TOP_N', type=int, default=12000, help='Number of top scoring boxes before using')
+    parser.add_argument('--TEST.RPN_PRE_NMS_TOP_N', type=int, default=6000, help='Number of top scoring boxes before using')
+    parser.add_argument('--TRAIN.RPN_POST_NMS_TOP_N', type=int, default=2000, help='Number of top scoring boxes after using')
+    parser.add_argument('--TRAIN.RPN_POST_NMS_TOP_N', type=int, default=300, help='Number of top scoring boxes after using')
+    parser.add_argument('--TRAIN.RPN_NMS_THRESH', type=float, default=0.7, help='NMS threshold')
+    parser.add_argument('--TRAIN.RPN_NMS_THRESH', type=float, default=0.7, help='NMS threshold')
+    parser.add_argument('--TRAIN.RPN_MIN_SIZE', type=int, default=8, help='min_size')
+    parser.add_argument('--TRAIN.RPN_MIN_SIZE', type=int, default=16, help='min_size')
+    parser.add_argument('--TRAIN.RPN_CLOBBER_POSITIVES', type=bool, default=False, help='')
+    parser.add_argument('--TRAIN.RPN_NEGATIVE_OVERLAP', type=float, default=0.3, help='')
+    parser.add_argument('--TRAIN.RPN_FG_FRACTION', type=float, default=0.5, help='')
+    parser.add_argument('--TRAIN.RPN_POSITIVE_OVERLAP', type=float, default=0.7, help='')
+    parser.add_argument('--TRAIN.RPN_BATCHSIZE', type=int, default=256, help='')
 
     args, unknown = parser.parse_known_args()
 
