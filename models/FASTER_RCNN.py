@@ -1,9 +1,9 @@
 import torch
 
-from models.roi.roi import ROI
-from models.rpn.rpn import RPN
-from models.rpn.proposal_target import RPN_PROPOSAL_TARGET
-from models.bones.Resnet import ResNet
+from roi.roi import ROI
+from rpn.rpn import RPN
+from rpn.proposal_target import RPN_PROPOSAL_TARGET
+from bones.Resnet import ResNet
 from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Variable
@@ -60,10 +60,10 @@ class Faster_RCNN(nn.Module):
 
         feats = self.base(im_data)
 
-        rois = self.rpn(feats,im_info, gt_boxes, num_boxes)
+        rois = self.rpn.forward(feats,im_info, gt_boxes, num_boxes)
 
         if self.training:
-            rois_data = self.proposal_target(rois, gt_boxes, num_boxes)
+            rois_data = self.proposal_target.forward(rois, gt_boxes, num_boxes)
             rois, rois_label, rois_target, roi_inside_ws, roi_outside_ws = rois_data
         else:
             rois_data=None
