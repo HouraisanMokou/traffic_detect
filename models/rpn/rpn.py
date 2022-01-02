@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 # from config import cfg
-from _ProposalLayer import _ProposalLayer
-from anchor_target_layer import anchor_target_layer
+from models.rpn._ProposalLayer import _ProposalLayer
+from models.rpn.anchor_target_layer import anchor_target_layer
 
 
 class RPN(nn.Module):
@@ -34,9 +34,9 @@ class RPN(nn.Module):
             len(self.anchor_ratios)*4  # 4 coordinates
         self.RPN_bbox_pred = nn.Conv2d(512, self.nc_score_out, 1, 1, 0)
 
-        self.RPN_proposal=_ProposalLayer(self.feat_stride,self.anchor_scales,self.anchor_ratios)
+        self.RPN_proposal=_ProposalLayer(self.feat_stride,self.anchor_scales,self.anchor_ratios,args)
 
-        self.RPN_anchor_target=anchor_target_layer(self.feat_stride,self.anchor_scales,self.anchor_ratios)
+        self.RPN_anchor_target=anchor_target_layer(self.feat_stride,self.anchor_scales,self.anchor_ratios,args)
 
         # # loss
         # self.cross_entropy = None
@@ -44,6 +44,7 @@ class RPN(nn.Module):
 
         self.rpn_loss_cls = 0
         self.rpn_loss_box = 0
+
 
     @property
     def loss(self):

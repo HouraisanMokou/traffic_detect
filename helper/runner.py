@@ -6,7 +6,7 @@ import torch
 
 from helper.reader import Reader
 from torch import optim
-from main import logger
+
 from tqdm import tqdm
 
 
@@ -16,6 +16,7 @@ class Runner():
     """
 
     def __init__(self, args, reader: Reader, model):
+        from main import logger
         self.reader = reader
         self.epoches = args.epoch
         self.test_epoch = args.test_epoch

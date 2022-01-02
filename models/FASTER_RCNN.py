@@ -1,9 +1,9 @@
 import torch
 
-from roi.roi import ROI
-from rpn.rpn import RPN
-from rpn.proposal_target import RPN_PROPOSAL_TARGET
-from bones.Resnet import ResNet
+from models.roi.roi import ROI
+from models.rpn.rpn import RPN
+from models.rpn.proposal_target import RPN_PROPOSAL_TARGET
+from models.bones.Resnet import ResNet
 from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Variable
