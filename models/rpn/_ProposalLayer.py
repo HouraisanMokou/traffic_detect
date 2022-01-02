@@ -2,14 +2,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.functional as F
-from anchors import generate_anchors
-from bbox_transform import bbox_transform_inv,clip_boxes
+from models.rpn.anchors import generate_anchors
+from models.rpn.bbox_transform import bbox_transform_inv,clip_boxes
 # from config import cfg
-from nms import nms
+from models.rpn.nms import nms
 
-class _ProposalLayer:
+class _ProposalLayer(nn.Module):
 
-    def __init__(self, feat_stride, scales, ratios) -> None:
+    def __init__(self, feat_stride, scales, ratios,args) -> None:
         super(_ProposalLayer, self).__init__()
 
         self._feat_stride = feat_stride
@@ -18,18 +18,19 @@ class _ProposalLayer:
         self._anchors = torch.from_numpy(generate_anchors(scales=np.array(scales),
                                                         ratios=np.array(ratios))).float()
         self._num_anchors = self._anchors.size(0)
+        self.args=args
 
-    def forward(self, input,args):
+    def forward(self, input):
         # rois=self.RPN_proposal((rpn_cls_prob.data,rpn_offsets.data,im_info,cfg_key))
         scores = input[0][:, self._num_anchors:, :, :]
         bbox_deltas = input[1]
         im_info = input[2]
         cfg_key = input[3]
 
-        pre_nms_topN = args[cfg_key].RPN_PRE_NMS_TOP_N
-        post_nums_topN = args[cfg_key].RPN_POST_NMS_TOP_N
-        nms_thresh = args[cfg_key].RPN_NMS_THRESH
-        min_size = args[cfg_key].RPN_MIN_SIZE
+        pre_nms_topN = eval(f'self.args.{cfg_key}_RPN_PRE_NMS_TOP_N')
+        post_nums_topN = eval(f'self.args.{cfg_key}_RPN_POST_NMS_TOP_N')
+        nms_thresh = eval(f'self.args.{cfg_key}_RPN_NMS_THRESH')
+        min_size = eval(f'self.args.{cfg_key}_RPN_MIN_SIZE')
 
         batch_size = bbox_deltas.shape[0]
 
@@ -80,7 +81,7 @@ class _ProposalLayer:
             proposals_single=proposals_single[order_single:]
             scores_single=scores_single[order_single].view(-1,1)
             
-            keep_idx_i=nms(torch.cat((proposals_single),1),nms_thresh,force_cpu=not args.USE_GPU_NMS)
+            keep_idx_i=nms(torch.cat((proposals_single),1),nms_thresh,force_cpu=not self.args.USE_GPU_NMS)
             keep_idx_i=keep_idx_i.long().view(-1)
 
             if post_nums_topN>0:

@@ -12,7 +12,7 @@
       <paths name="11912716@10.20.19.118:10022 password (1)">
         <serverdata>
           <mappings>
-            <mapping deploy="/data/11912716/traffic_detect" local="$PROJECT_DIR$" />
+            <mapping deploy="/traffic_detect" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

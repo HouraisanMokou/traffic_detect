@@ -179,11 +179,12 @@ if __name__ == '__main__':
 
     r = Reader(args)
     md = ImageSet(r.data['train'])
-    dl = PrefetchLoader(md,batch_size=256, num_workers=16, collate_fn=ImageSet._collate)#
+    dl = PrefetchLoader(md,batch_size=256, num_workers=8, collate_fn=ImageSet._collate)#
     #
     import time
 
     t1 = time.time()
+    t0=t1
     cnt = 0
     for d in dl:
         for k in d:
@@ -195,4 +196,4 @@ if __name__ == '__main__':
         t1=t2
         # if cnt == 15:
         #     break
-    print(time.time() - t1,cnt)
+    print(time.time() - t0,cnt)
