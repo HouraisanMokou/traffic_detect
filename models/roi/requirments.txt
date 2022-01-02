@@ -1,0 +1,3 @@
+cupy-cuda101==stable # mine cupy-cuda112==10.0.0
+torch>=1.0.0 # mine torch==1.10.0
+# first run test.py to check the enviroment

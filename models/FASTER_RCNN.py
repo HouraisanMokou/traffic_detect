@@ -69,7 +69,7 @@ class Faster_RCNN(nn.Module):
             rois_data=None
 
         # roi pool
-        feats_pooled = self.roi_pool(feats, rois)
+        feats_pooled = self.roi_pool.roi_pooling(feats, rois)
         feats_linear = feats_pooled.view(feats_pooled.size()[0], -1)
         feats_linear = F.dropout(F.relu(self.linear1(feats_linear)), self.dropout_rate, training=self.training)
         feats_linear = F.dropout(F.relu(self.linear2(feats_linear)), self.dropout_rate, training=self.training)
