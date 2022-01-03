@@ -33,8 +33,8 @@ class Reader():
     def __init__(self, args):
         self.dataset = args.dataset_name
         self.dataset_path = args.dataset_path
-        self.w = 800
-        self.h = 600
+        self.w = 256
+        self.h = 256
 
         self.preprocess()
 
@@ -64,7 +64,7 @@ class Reader():
             li = ['new_train', 'new_test', 'new_other']  #
             flag=False
             for l in li:
-                p = os.path.join('../data/tt100k_2021/', l)
+                p = os.path.join('./data/tt100k_2021/', l)
                 if not os.path.exists(p):
                     flag=True
                     os.makedirs(p)
@@ -72,11 +72,11 @@ class Reader():
             for img_id in tqdm(imgs, desc='preprocess target',
                                leave=False, ncols=100, mininterval=0.01):
                 path = imgs[img_id]['path']
-                new_path = os.path.join('../data/tt100k_2021/', path)
+                new_path = os.path.join('./data/tt100k_2021/', path)
                 objects = imgs[img_id]['objects']
                 if not flag:
                     # w, h = imagesize.get(new_path)
-                    w, h = imagesize.get(os.path.join('../data/tt100k_2021/', 'new_' + path))
+                    w, h = imagesize.get(os.path.join('./data/tt100k_2021/', 'new_' + path))
                 else:
                     img = Image.open(new_path)
                     w, h = img.size
@@ -99,13 +99,13 @@ class Reader():
                 # num_box=min(self.max_num,num_box)
                 gt_boxes=np.pad(gt_boxes,((0,self.max_num-num_box),(0,0)))
                 piece = {
-                    'path': os.path.join('../data/tt100k_2021/', 'new_' + path),
+                    'path': os.path.join('./data/tt100k_2021/', 'new_' + path),
                     'im_info': torch.from_numpy(np.array([w, h])),
                     'gt_boxes': torch.from_numpy(gt_boxes),
                     'num_box': torch.from_numpy(np.array([num_box]))
                 }
                 if flag:
-                    img.save(os.path.join('../data/tt100k_2021/', 'new_' + path))
+                    img.save(os.path.join('./data/tt100k_2021/', 'new_' + path))
                 if 'train' in path:
                     train_l.append(piece)
                 elif 'test' in path:
@@ -135,7 +135,7 @@ class Reader():
         """
         data = self.data[phase]
         image_set=ImageSet(data)
-        return DataLoader(image_set, batch_size=256, num_workers=16, collate_fn=ImageSet._collate)
+        return DataLoader(image_set, batch_size=batch_size, num_workers=16, collate_fn=ImageSet._collate)
 
 class ImageSet(VisionDataset):
     def __init__(self, data):
@@ -164,7 +164,7 @@ class ImageSet(VisionDataset):
         r= {
             'im_data':torch.stack([d['im_data'] for  d in dicts]),
             'im_info': torch.stack([d['im_info'] for  d in dicts]),
-            'gt_bbox': torch.stack([d['gt_boxes'] for  d in dicts]),
+            'gt_boxes': torch.stack([d['gt_boxes'] for  d in dicts]),
             'num_box': torch.stack([d['num_box'] for  d in dicts])
         }
         # print(time.time()-t1)

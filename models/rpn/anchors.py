@@ -15,10 +15,12 @@ def _make_anchors(ws, hs, x_center, y_center):
     # add one axis
     ws = ws[:, np.newaxis]
     hs = hs[:, np.newaxis]
-    anchors = np.hstack((x_center-0.5*(ws-1)),
-                        (y_center-0.5*(hs-1)),
-                        (x_center+0.5*(ws-1)),
-                        (y_center+0.5*(ws-1)))
+    anchors = np.hstack((
+        (x_center - 0.5 * (ws - 1)),
+        (y_center - 0.5 * (hs - 1)),
+        (x_center + 0.5 * (ws - 1)),
+        (y_center + 0.5 * (ws - 1))
+    ))
     return anchors
 
 

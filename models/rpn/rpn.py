@@ -13,7 +13,7 @@ class RPN(nn.Module):
     rpn net
     """
 
-    def __ini__(self, din, args):
+    def __init__(self, din, args):
         super(RPN, self).__init__()
 
         self.din = din  # the depth of input feature map
@@ -46,12 +46,12 @@ class RPN(nn.Module):
         self.rpn_loss_box = 0
 
 
-    @property
+
     def loss(self):
         return self.cross_entropy+self.loss_box*10
 
-    @property
-    def reshape(x,d):
+
+    def reshape(self,x,d):
         input_shape=x.size()
         x=x.view(
             input_shape[0],
@@ -62,6 +62,7 @@ class RPN(nn.Module):
         return x
 
     def forward(self,base_feat,im_info,gt_boxes,num_boxes):
+        print(base_feat.size())
         batch_size=base_feat.size(0)
 
         # return feature map after convrelu layer

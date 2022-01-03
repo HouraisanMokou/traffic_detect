@@ -17,6 +17,7 @@ class Runner():
 
     def __init__(self, args, reader: Reader, model):
         from main import logger
+        self.logger=logger
         self.reader = reader
         self.epoches = args.epoch
         self.test_epoch = args.test_epoch
@@ -34,21 +35,21 @@ class Runner():
     def evaluate(self, phase, file_name):
         self.model.load_state_dict(torch.load(file_name))
         ap, t = self.predict(phase)
-        logger.info('test on model[{}]: ap[{}], time[{}]'.format(file_name, ap, t))
+        self.logger.info('test on model[{}]: ap[{}], time[{}]'.format(file_name, ap, t))
 
     def train(self):
-        logger.info('start to train')
+        self.logger.info('start to train')
         self.model.to(self.device)
         loss_l, time_l, eval_list = [], [], []
-        for epoch in self.epoches:
+        for epoch in range(self.epoches):
             batch_loss, used_time = self.fit(epoch)
             torch.save(self.model.state_dict(), self.checkpoints_prefix + f'_{epoch}.pth')
             loss_l.append(batch_loss)
             time_l.append(used_time)
-            logger.info('epoch {}: loss[{}], used time[{}]'.format(epoch, batch_loss, used_time))
+            self.logger.info('epoch {}: loss[{}], used time[{}]'.format(epoch, batch_loss, used_time))
             if self.test_epoch != -1 and epoch % self.test_epoch == 0:
                 ap, t = self.predict('val')
-                logger.info('[test on val in epoch {}: ap[{}], time[{}]]'.format(epoch, ap, t))
+                self.logger.info('[test on val in epoch {}: ap[{}], time[{}]]'.format(epoch, ap, t))
                 eval_list.append((ap, t))
                 # terminal if test ap is continuously go down
                 if self.terminal(eval_list):
@@ -59,7 +60,7 @@ class Runner():
                 'loss_list': loss_l,
                 'time_list': time_l
             }, f)
-        logger.info('model saved')
+        self.logger.info('model saved')
 
     def fit(self, epoch):
         if self.optimizer == None:
@@ -79,7 +80,7 @@ class Runner():
         # for feed_dict in dataloader:
         for batch in tqdm(dataloader, desc='epoch {}'.format(epoch), leave=False, ncols=100, mininterval=0.1):
             for k in batch:
-                batch[k].to(self.device)
+                batch[k]=batch[k].to(self.device)
             self.model(batch)
             loss = self.model.loss
 
@@ -104,7 +105,7 @@ class Runner():
             # for batch in dataloader
             for batch in tqdm(dataloader, desc='testing', leave=False, ncols=100, mininterval=0.1):
                 for k in batch:
-                    batch[k].to(self.device)
+                    batch[k]=batch[k].to(self.device)
                 cls_prob, bbox_pred, rois_data = self.model(batch)
                 result_list.append((cls_prob, bbox_pred, rois_data))
                 if batch['gt_boxes'] is not None:

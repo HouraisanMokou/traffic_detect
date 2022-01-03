@@ -29,7 +29,7 @@ def get_args():
     parser.add_argument('--random_state', type=int, default=2021, help='the random seed')
 
     # arguments for runner
-    parser.add_argument('--device', type=str, default='cuda:0',
+    parser.add_argument('--device', type=str, default='cuda:1',
                         help='cuda:0 / cpu')
     parser.add_argument('--epoch', type=int, default=200,
                         help='number of epochs')
@@ -38,8 +38,8 @@ def get_args():
     parser.add_argument('--stop', type=int, default=5, help='stop cnt when accuracy down continuously')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--l2', type=float, default=0, help='l2 regularization in optimizer')
-    parser.add_argument('--batch_size', type=int, default=256, help='batch size while training/ validating')
-    parser.add_argument('--eval_batch_size', type=int, default=256, help='batch size while testing')
+    parser.add_argument('--batch_size', type=int, default=1, help='batch size while training/ validating')
+    parser.add_argument('--eval_batch_size', type=int, default=1, help='batch size while testing')
 
     # arguments for models
     parser.add_argument('--dropout_rate', type=float, default=0.2, help='the drop out rate of linear layers')
@@ -47,7 +47,7 @@ def get_args():
     # rpn arguments
     parser.add_argument('--TRAIN_RPN_POSITIVE_WEIGHT', type=float, default=-1.0, help='')
     parser.add_argument('--USE_GPU_NMS', type=bool, default=True, help='')
-    parser.add_argument('--TRAIN.RPN_PRE_NMS_TOP_N', type=int, default=12000, help='Number of top scoring boxes before using')
+    parser.add_argument('--TRAIN_RPN_PRE_NMS_TOP_N', type=int, default=12000, help='Number of top scoring boxes before using')
     parser.add_argument('--TEST_RPN_PRE_NMS_TOP_N', type=int, default=6000, help='Number of top scoring boxes before using')
     parser.add_argument('--TRAIN_RPN_POST_NMS_TOP_N', type=int, default=2000, help='Number of top scoring boxes after using')
     parser.add_argument('--TEST_RPN_POST_NMS_TOP_N', type=int, default=300, help='Number of top scoring boxes after using')
@@ -64,7 +64,7 @@ def get_args():
     args, unknown = parser.parse_known_args()
 
     # setting of paths
-    setattr(args,'logging_file',os.path.join(
+    setattr(args,'logging_file_name',os.path.join(
         args.logging_directory,
         '{}_{}_{}.txt'.format(args.base_name,
                               args.dataset_name,
@@ -107,12 +107,12 @@ def main(args):
     logger.info('build runner')
     runner=Runner(args,reader,model)
 
-    # if args.stage=='train':
-    #     logger.info('start to train')
-    #     runner.train()
-    # else:
-    #     logger.info('start to test')
-    #     runner.evaluate('test',args.best_checkpoint)
+    if args.stage=='train':
+        logger.info('start to train')
+        runner.train()
+    else:
+        logger.info('start to test')
+        runner.evaluate('test',args.best_checkpoint)
 
 
 

@@ -10,7 +10,7 @@ from models.rpn.bbox_transform import bbox_overlaps_batch, bbox_transform_batch
 
 class anchor_target_layer(nn.Module):
     def __init__(self, feat_stride, scales, ratios,args) -> None:
-        super(anchor_target_layer).__init__()
+        super(anchor_target_layer,self).__init__()
 
         self._feat_stride = feat_stride
         self._scales = scales

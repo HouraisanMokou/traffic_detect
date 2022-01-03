@@ -8,7 +8,7 @@ import pdb
 
 class RPN_PROPOSAL_TARGET(nn.Module):
     def __init__(self, nclasses):
-        super(_ProposalTargetLayer, self).__init__()
+        super(RPN_PROPOSAL_TARGET, self).__init__()
         self._num_classes = nclasses
         self.BBOX_NORMALIZE_MEANS = torch.FloatTensor((0.0, 0.0, 0.0, 0.0))
         self.BBOX_NORMALIZE_STDS = torch.FloatTensor((0.1, 0.1, 0.2, 0.2))

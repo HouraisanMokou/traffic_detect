@@ -31,8 +31,8 @@ class Faster_RCNN(nn.Module):
         #self.base = ResNet.ResNet101(self.n_classes)
 
         # rpn
-        self.rpn = RPN()
-        self.proposal_target = RPN_PROPOSAL_TARGET()
+        self.rpn = RPN(512, args)
+        self.proposal_target = RPN_PROPOSAL_TARGET(self.n_classes)
 
         # roi
         self.roi_pool = ROI(7, 7, 1 / 16)
@@ -60,16 +60,17 @@ class Faster_RCNN(nn.Module):
 
         feats = self.base(im_data)
 
-        rois = self.rpn.forward(feats,im_info, gt_boxes, num_boxes)
+        rois = self.rpn(feats,im_info, gt_boxes, num_boxes)
 
         if self.training:
-            rois_data = self.proposal_target.forward(rois, gt_boxes, num_boxes)
+            rois_data = self.proposal_target(rois, gt_boxes, num_boxes)
             rois, rois_label, rois_target, roi_inside_ws, roi_outside_ws = rois_data
         else:
             rois_data=None
 
         # roi pool
         feats_pooled = self.roi_pool.roi_pooling(feats, rois)
+        feats_pooled = self.base.head_to_tail(feats_pooled)
         feats_linear = feats_pooled.view(feats_pooled.size()[0], -1)
         feats_linear = F.dropout(F.relu(self.linear1(feats_linear)), self.dropout_rate, training=self.training)
         feats_linear = F.dropout(F.relu(self.linear2(feats_linear)), self.dropout_rate, training=self.training)
