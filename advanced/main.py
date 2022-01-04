@@ -1,4 +1,4 @@
-from models.FASTER_RCNN import Faster_RCNN
+
 from helper.reader import Reader
 from helper.runner import Runner
 import logging
@@ -11,20 +11,22 @@ import numpy as np
 import torch.random
 
 logger = logging.getLogger('logger')
+
+
 def get_args():
-    parser=argparse.ArgumentParser(description='arguments of program')
-    parser.add_argument('--data_directory', type=str, default='./data', help='original data directory')
+    parser = argparse.ArgumentParser(description='arguments of program')
+    parser.add_argument('--data_directory', type=str, default='../data', help='original data directory')
     parser.add_argument('--checkpoints_directory', type=str, default='./checkpoints', help='checkpoints directory')
 
     parser.add_argument('--best_checkpoint', type=bool, default=False, help='checkpoint to test')
     parser.add_argument('--dataset_name', type=str, default='tt100k_2021', help='the name of data set')
-    parser.add_argument('--base_name',type=str,default='ResNet50',help='the basic bone of Faster-RCNN')
+    parser.add_argument('--base_name', type=str, default='ResNet50', help='the basic bone of Faster-RCNN')
     # the path of data set should be {data_directory}/{dataset_name}
     # the models would be saved to {checkpoints_directory}/{base_name}_{dataset_name}/{current epoch}
 
     parser.add_argument('--stage', type=str, default='train', help='train/test')
     parser.add_argument('--logging_directory',
-                        type=str, default='./log', help='the directory the log would be saved to')
+                        type=str, default='../log', help='the directory the log would be saved to')
     # the path of logging should be {logging_directory}/{base_name}_{dataset_name}_{daytime}
     parser.add_argument('--random_state', type=int, default=2021, help='the random seed')
 
@@ -43,14 +45,18 @@ def get_args():
 
     # arguments for models
     parser.add_argument('--dropout_rate', type=float, default=0.2, help='the drop out rate of linear layers')
-    
+
     # rpn arguments
     parser.add_argument('--TRAIN_RPN_POSITIVE_WEIGHT', type=float, default=-1.0, help='')
     parser.add_argument('--USE_GPU_NMS', type=bool, default=True, help='')
-    parser.add_argument('--TRAIN_RPN_PRE_NMS_TOP_N', type=int, default=12000, help='Number of top scoring boxes before using')
-    parser.add_argument('--TEST_RPN_PRE_NMS_TOP_N', type=int, default=6000, help='Number of top scoring boxes before using')
-    parser.add_argument('--TRAIN_RPN_POST_NMS_TOP_N', type=int, default=2000, help='Number of top scoring boxes after using')
-    parser.add_argument('--TEST_RPN_POST_NMS_TOP_N', type=int, default=300, help='Number of top scoring boxes after using')
+    parser.add_argument('--TRAIN_RPN_PRE_NMS_TOP_N', type=int, default=12000,
+                        help='Number of top scoring boxes before using')
+    parser.add_argument('--TEST_RPN_PRE_NMS_TOP_N', type=int, default=6000,
+                        help='Number of top scoring boxes before using')
+    parser.add_argument('--TRAIN_RPN_POST_NMS_TOP_N', type=int, default=2000,
+                        help='Number of top scoring boxes after using')
+    parser.add_argument('--TEST_RPN_POST_NMS_TOP_N', type=int, default=300,
+                        help='Number of top scoring boxes after using')
     parser.add_argument('--TRAIN_RPN_NMS_THRESH', type=float, default=0.7, help='NMS threshold')
     parser.add_argument('--TEST_RPN_NMS_THRESH', type=float, default=0.7, help='NMS threshold')
     parser.add_argument('--TRAIN_RPN_MIN_SIZE', type=int, default=8, help='min_size')
@@ -64,19 +70,20 @@ def get_args():
     args, unknown = parser.parse_known_args()
 
     # setting of paths
-    setattr(args,'logging_file_name',os.path.join(
+    setattr(args, 'logging_file_name', os.path.join(
         args.logging_directory,
         '{}_{}_{}.txt'.format(args.base_name,
                               args.dataset_name,
                               time.strftime('%Y.%m.%d', time.localtime()))
     ))
-    setattr(args,'dataset_path',os.path.join(
-        args.data_directory,args.dataset_name
+    setattr(args, 'dataset_path', os.path.join(
+        args.data_directory, args.dataset_name
     ))
-    setattr(args,'checkpoints_prefix',
-            args.checkpoints_directory+'//'+'{}_{}'.format(args.base_name,args.dataset_name))
+    setattr(args, 'checkpoints_prefix',
+            args.checkpoints_directory + '//' + '{}_{}'.format(args.base_name, args.dataset_name))
 
     return args
+
 
 def main(args):
     """
@@ -101,23 +108,22 @@ def main(args):
     torch.backends.cudnn.deterministic = True
 
     logger.info('build reader')
-    reader=Reader(args)
-    logger.info('build models')
-    model=Faster_RCNN(reader.classes,args)
-    logger.info('build runner')
-    runner=Runner(args,reader,model)
+    reader = Reader(args)
+    # logger.info('build models')
+    # model = Faster_RCNN(reader.classes, args)
+    # logger.info('build runner')
+    # runner = Runner(args, reader, model)
+    #
+    # if args.stage == 'train':
+    #     logger.info('start to train')
+    #     runner.train()
+    # else:
+    #     logger.info('start to test')
+    #     runner.evaluate('test', args.best_checkpoint)
 
-    if args.stage=='train':
-        logger.info('start to train')
-        runner.train()
-    else:
-        logger.info('start to test')
-        runner.evaluate('test',args.best_checkpoint)
 
-
-
-if __name__=='__main__':
-    args=get_args()
+if __name__ == '__main__':
+    args = get_args()
     main(args)
     # cfg_key='TRAIN'
     # print(eval(f'args.{cfg_key}_RPN_POST_NMS_TOP_N'))

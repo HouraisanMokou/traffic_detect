@@ -43,7 +43,7 @@ class _ProposalLayer(nn.Module):
         shifts = torch.from_numpy(np.vstack((shift_x.ravel(), shift_y.ravel(),
                                             shift_x.ravel(), shift_y.ravel())).transpose())
         shifts = shifts.contiguous().type_as(scores).float()
-
+        print(shifts.size(),input[1].size())
         A=self._num_anchors
         K=shifts.shape[0]
 
