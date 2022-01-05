@@ -20,7 +20,7 @@ class _ProposalLayer(nn.Module):
         self._num_anchors = self._anchors.size(0)
         self.args=args
 
-    def forward(self, input):
+        def forward(self, input):
         # rois=self.RPN_proposal((rpn_cls_prob.data,rpn_offsets.data,im_info,cfg_key))
         scores = input[0][:, self._num_anchors:, :, :]
         bbox_deltas = input[1]
@@ -43,7 +43,7 @@ class _ProposalLayer(nn.Module):
         shifts = torch.from_numpy(np.vstack((shift_x.ravel(), shift_y.ravel(),
                                             shift_x.ravel(), shift_y.ravel())).transpose())
         shifts = shifts.contiguous().type_as(scores).float()
-        print(shifts.size(),input[1].size())
+
         A=self._num_anchors
         K=shifts.shape[0]
 
@@ -76,22 +76,21 @@ class _ProposalLayer(nn.Module):
             
             # numel(): the number of elements
             if pre_nms_topN>0 and pre_nms_topN<scores_keep.numel():
-                order_sigle=order_single[:pre_nms_topN]
+                order_single=order_single[:pre_nms_topN]
 
-            proposals_single=proposals_single[order_single:]
+            proposals_single=proposals_single[order_single,:]
             scores_single=scores_single[order_single].view(-1,1)
             
-            keep_idx_i=nms(torch.cat((proposals_single),1),nms_thresh,force_cpu=not self.args.USE_GPU_NMS)
+            keep_idx_i=nms(torch.cat((proposals_single,scores_single),1),nms_thresh,force_cpu=True)
             keep_idx_i=keep_idx_i.long().view(-1)
 
             if post_nums_topN>0:
                 keep_idx_i=keep_idx_i[:post_nums_topN]
             
             proposals_single=proposals_single[keep_idx_i,:]
-            scores_single=proposals_single[keep_idx_i,:]
+            scores_single=scores_single[keep_idx_i,:]
 
             num_proposal= proposals_single.size(0)
             output[i,:,0]=i
             output[i,:num_proposal,1:]=proposals_single
         return output
-
