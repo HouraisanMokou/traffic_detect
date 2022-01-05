@@ -62,9 +62,9 @@ class anchor_target_layer(nn.Module):
         # label: 1 = positive, 0 = negative, -1 = don't care
         labels = gt_boxes.new(batch_size, inds_inside.shape[0]).fill_(-1)
         bbox_inside_weights = gt_boxes.new(
-            batch_size, inds_inside.size[0]).zero_()
+            batch_size, inds_inside.size(0)).zero_()
         bbox_outside_weights = gt_boxes.new(
-            batch_size, inds_inside.shape[0]).zero_()
+            batch_size, inds_inside.size(0)).zero_()
 
         overlaps = bbox_overlaps_batch(anchors, gt_boxes)
 
@@ -149,12 +149,12 @@ class anchor_target_layer(nn.Module):
         anchors_count=bbox_inside_weights.shape[1]
         bbox_inside_weights=bbox_inside_weights.view(batch_size,anchors_count,1).expand(batch_size,anchors_count,4)
 
-        bbox_inside_weights=bbox_inside_weights.contiguous().view(batch_size,height,width,4*A).permuter(0,3,1,2).contiguous()
+        bbox_inside_weights=bbox_inside_weights.contiguous().view(batch_size,height,width,4*A).permute(0,3,1,2).contiguous()
 
         outputs.append(bbox_inside_weights)
 
         bbox_outside_weights=bbox_outside_weights.view(batch_size,anchors_count,1).expand(batch_size,anchors_count,4)
-        bbox_outside_weights=bbox_outside_weights.view(batch_size,height,width,4*A).permute(0,3,1,2).contiguous()
+        bbox_outside_weights=bbox_outside_weights.reshape(batch_size,height,width,4*A).permute(0,3,1,2).contiguous()
         outputs.append(bbox_outside_weights)
 
         return outputs
