@@ -1,6 +1,6 @@
 
 from helper.reader import Reader
-from models.original_fasterrcnn import get_default,run_default
+from models.original_fasterrcnn import get_default,run_default,get_default2
 import logging
 import os
 import random
@@ -16,7 +16,7 @@ logger = logging.getLogger('logger')
 def get_args():
     parser = argparse.ArgumentParser(description='arguments of program')
     parser.add_argument('--data_directory', type=str, default='../data', help='original data directory')
-    parser.add_argument('--checkpoints_directory', type=str, default='./checkpoints', help='checkpoints directory')
+    parser.add_argument('--checkpoints_directory', type=str, default='../checkpoints', help='checkpoints directory')
 
     parser.add_argument('--best_checkpoint', type=bool, default=False, help='checkpoint to test')
     parser.add_argument('--dataset_name', type=str, default='tt100k_2021', help='the name of data set')
@@ -79,8 +79,11 @@ def get_args():
     setattr(args, 'dataset_path', os.path.join(
         args.data_directory, args.dataset_name
     ))
+    prefix=args.checkpoints_directory + '/' + '{}_{}'.format(args.base_name, args.dataset_name)
     setattr(args, 'checkpoints_prefix',
-            args.checkpoints_directory + '//' + '{}_{}'.format(args.base_name, args.dataset_name))
+            prefix)
+    if not os.path.exists(prefix):
+        os.makedirs(prefix)
 
     return args
 
@@ -110,7 +113,7 @@ def main(args):
     logger.info('build reader')
     reader = Reader(args)
     model=get_default(len(reader.classes))
-    run_default(reader,model)
+    run_default(reader,model,logger,args.checkpoints_prefix)
 
 
 if __name__ == '__main__':

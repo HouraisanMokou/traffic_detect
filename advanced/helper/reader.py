@@ -14,7 +14,7 @@ import json
 import imagesize
 from tqdm import tqdm
 from prefetch_generator import BackgroundGenerator
-from helper.tt100k2COCO import *
+from helper.tt100k2COCO import trans,class_dict
 
 
 class PrefetchLoader(DataLoader):
@@ -115,13 +115,13 @@ if __name__ == '__main__':
                        rpn_anchor_generator=anchor_generator,
                        box_roi_pool=roi_pooler)
 
-    o = Adamax([p for p in model.parameters() if p.requires_grad], lr=5e6)
+    o = Adamax([p for p in model.parameters() if p.requires_grad], lr=1e5)
     device='cuda:3'
     model.to(device)
     cnt=0
     for e in range(10):
         loss_l = []
-        for d in tqdm(dl, desc='train', total=len(dl)):
+        for d in dl:#tqdm(dl, desc='train', total=len(dl)):
             cnt += 1
             i, t = d
             for idx in range(len(i)):
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                     if isinstance(tt[k], torch.Tensor):
                         tt[k] = tt[k].to(device)
             output = model(i, t)
-
+            print(output)
             losses = sum(loss for loss in output.values())
             loss_l.append(losses.cpu().detach().numpy())
             o.zero_grad()

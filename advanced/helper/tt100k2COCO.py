@@ -88,60 +88,62 @@ def trans(file, out):
         else:
             whole_set = val_set
 
-        whole_set['images'].append({
-            'file_name': new_p,
-            'id': int(img_id),
-            'width': new_w,
-            'height': new_h
-        })
-        complete_set['images'].append({
-            'file_name': new_p,
-            'id': int(img_id),
-            'width': new_w,
-            'height': new_h
-        })
         objects = img_e['objects']
+        if len(objects)>0:
+            whole_set['images'].append({
+                'file_name': new_p,
+                'id': int(img_id),
+                'width': new_w,
+                'height': new_h
+            })
+            complete_set['images'].append({
+                'file_name': new_p,
+                'id': int(img_id),
+                'width': new_w,
+                'height': new_h
+            })
 
-        for o in objects:
-            xmin = o['bbox']['xmin'] / w * new_w
-            xmax = o['bbox']['xmax'] / w * new_w
-            ymin = o['bbox']['ymin'] / h * new_h
-            ymax = o['bbox']['ymax'] / h * new_h
 
-            x = xmin
-            y = ymin
+            for o in objects:
+                xmin = o['bbox']['xmin'] / w * new_w
+                xmax = o['bbox']['xmax'] / w * new_w
+                ymin = o['bbox']['ymin'] / h * new_h
+                ymax = o['bbox']['ymax'] / h * new_h
 
-            width = xmax - xmin
-            height = ymax - ymin
+                x = xmin
+                y = ymin
 
-            whole_set['annotations'].append(
-                {
-                    'area': width * height,
-                    'bbox': [x, y, width, height],
-                    'category_id': class_dict[o['category']],
-                    'labels': class_dict[o['category']],
-                    'id': obj_id,
-                    'image_id': int(img_id),
-                    'iscrowd': 0,
-                    'segmentation': [[x, y, x + width, y, x + width, y + height, x, y + height]],
-                    'boxes': [x, y, xmax, ymax]
-                }
-            )
-            complete_set['annotations'].append(
-                {
-                    'area': width * height,
-                    'bbox': [x, y, width, height],
-                    'category_id': class_dict[o['category']],
-                    'labels': class_dict[o['category']],
-                    'id': obj_id,
-                    'image_id': int(img_id),
-                    'iscrowd': 0,
-                    'segmentation': [[x, y, x + width, y, x + width, y + height, x, y + height]],
-                    'boxes': [x, y, xmax, ymax]
-                }
-            )
-            obj_id += 1
-        cnt += 1
+                width = xmax - xmin
+                height = ymax - ymin
+
+                whole_set['annotations'].append(
+                    {
+                        'area': width * height,
+                        'bbox': [x, y, width, height],
+                        'category_id': class_dict[o['category']],
+                        'labels': class_dict[o['category']],
+                        'id': obj_id,
+                        'image_id': int(img_id),
+                        'iscrowd': 0,
+                        'segmentation': [[x, y, x + width, y, x + width, y + height, x, y + height]],
+                        'boxes': [x, y, xmax, ymax]
+                    }
+                )
+                complete_set['annotations'].append(
+                    {
+                        'area': width * height,
+                        'bbox': [x, y, width, height],
+                        'category_id': class_dict[o['category']],
+                        'labels': class_dict[o['category']],
+                        'id': obj_id,
+                        'image_id': int(img_id),
+                        'iscrowd': 0,
+                        'segmentation': [[x, y, x + width, y, x + width, y + height, x, y + height]],
+                        'boxes': [x, y, xmax, ymax]
+                    }
+                )
+                obj_id += 1
+            cnt += 1
 
     #
     for s in ['train', 'test', 'val', 'complete']:
