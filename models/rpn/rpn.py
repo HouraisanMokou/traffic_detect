@@ -32,7 +32,7 @@ class RPN(nn.Module):
         # 4k coordinate layer
         self.nc_bbox_out = len(self.anchor_scales) * \
             len(self.anchor_ratios)*4  # 4 coordinates
-        self.RPN_bbox_pred = nn.Conv2d(512, self.nc_score_out, 1, 1, 0)
+        self.RPN_bbox_pred = nn.Conv2d(512, self.nc_bbox_out, 1, 1, 0)
 
         self.RPN_proposal=_ProposalLayer(self.feat_stride,self.anchor_scales,self.anchor_ratios,args)
 
@@ -100,7 +100,7 @@ class RPN(nn.Module):
             rpn_keep=Variable(rpn_label.view(-1).ne(-1).nonzero().view(-1))
             rpn_cls_score=torch.index_select(rpn_cls_score.view(-1,2),0,rpn_keep)
             rpn_label=torch.index_select(rpn_label.view(-1),0,rpn_keep.data)
-            rpn_label=Variable(rpn_label.int())
+            rpn_label=Variable(rpn_label.long())
             self.rpn_loss_cls=F.cross_entropy(rpn_cls_score,rpn_label)
             fg_cnt=torch.sum(rpn_label.data.ne(0))
 
