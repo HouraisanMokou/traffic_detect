@@ -1,6 +1,6 @@
 
 from helper.reader import Reader
-from helper.runner import Runner
+from models.original_fasterrcnn import get_default,run_default
 import logging
 import os
 import random
@@ -109,17 +109,8 @@ def main(args):
 
     logger.info('build reader')
     reader = Reader(args)
-    # logger.info('build models')
-    # model = Faster_RCNN(reader.classes, args)
-    # logger.info('build runner')
-    # runner = Runner(args, reader, model)
-    #
-    # if args.stage == 'train':
-    #     logger.info('start to train')
-    #     runner.train()
-    # else:
-    #     logger.info('start to test')
-    #     runner.evaluate('test', args.best_checkpoint)
+    model=get_default(len(reader.classes))
+    run_default(reader,model)
 
 
 if __name__ == '__main__':

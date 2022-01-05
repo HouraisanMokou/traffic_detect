@@ -65,6 +65,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="zy">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/traffic" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
     <option name="myAutoUpload" value="ALWAYS" />
   </component>

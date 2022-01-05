@@ -1,42 +1,41 @@
 import copy
 import os.path
 import sys
+import time
 
 import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
-from torchvision.datasets import VisionDataset
+from torchvision.datasets import VisionDataset, CocoDetection
 from torch.utils.data.dataloader import DataLoader
 from typing import NoReturn, List
 import json
 import imagesize
 from tqdm import tqdm
 from prefetch_generator import BackgroundGenerator
+from helper.tt100k2COCO import *
+
 
 class PrefetchLoader(DataLoader):
     def __iter__(self):
         return BackgroundGenerator(super().__iter__())
 
+
+
 class Reader():
-    """
-    to read the data
-
-    feed_dict for dataloader:
-        use dict to load (convenient for later use)
-        should contain:
-            im_data,im_info,gt_boxes,num_box
-            gt_boxes: ground true roi and bbox (0-3bbox, 4target)
-            im_info: w,h,scale
-    """
-
     def __init__(self, args):
         self.dataset = args.dataset_name
         self.dataset_path = args.dataset_path
         self.w = 256
         self.h = 256
 
+        self.com = transforms.Compose([
+            transforms.ToTensor()
+        ])
+
         self.preprocess()
+        self.classes=class_dict
 
     def preprocess(self) -> NoReturn:
         """
@@ -44,88 +43,7 @@ class Reader():
         :return:
         """
         if self.dataset == 'tt100k_2021':
-            file_path = os.path.join(self.dataset_path, 'annotations_all.json')
-            with open(file_path, 'rb') as f:
-                data = json.load(f)
-
-            self.classes = data['types']
-            self._assign_ids()
-            imgs = data['imgs']
-
-            # for img_id in imgs:
-            self.max_num=0
-            for img_id in tqdm(imgs, desc='find max len',
-                               leave=False, ncols=100, mininterval=0.01):
-                objects = imgs[img_id]['objects']
-                self.max_num=max(self.max_num,len(objects))
-            # self.max_num = min(self.max_num, 1)
-            train_l = []
-            test_val_l = []
-            li = ['new_train', 'new_test', 'new_other']  #
-            flag=False
-            for l in li:
-                p = os.path.join('../data/tt100k_2021/', l)
-                if not os.path.exists(p):
-                    flag=True
-                    os.makedirs(p)
-            # for img_id in imgs:
-            for img_id in tqdm(imgs, desc='preprocess target',
-                               leave=False, ncols=100, mininterval=0.01):
-                path = imgs[img_id]['path']
-                new_path = os.path.join('../data/tt100k_2021/', path)
-                objects = imgs[img_id]['objects']
-                if not flag:
-                    # w, h = imagesize.get(new_path)
-                    w, h = imagesize.get(os.path.join('../data/tt100k_2021/', 'new_' + path))
-                else:
-                    img = Image.open(new_path)
-                    w, h = img.size
-                    img = img.resize((self.w, self.h))
-                num_box = len(objects)
-                gt_boxes = []
-                for o in objects:
-                    bbox = o['bbox']
-                    category = o['category']
-                    gt_box = [
-                        bbox['xmin'] / w * self.w,
-                        bbox['xmax'] / w * self.w,
-                        bbox['ymin'] / h * self.h,
-                        bbox['ymax'] / h * self.h,
-                        self.class_dict[category]
-                    ]
-                    gt_boxes.append(gt_box)
-                gt_boxes = np.array(gt_boxes)
-                # gt_boxes = np.array(gt_boxes)[:self.max_num,:]
-                # num_box=min(self.max_num,num_box)
-                gt_boxes=np.pad(gt_boxes,((0,self.max_num-num_box),(0,0)))
-                piece = {
-                    'path': os.path.join('../data/tt100k_2021/', 'new_' + path),
-                    'im_info': torch.from_numpy(np.array([w, h])),
-                    'gt_boxes': torch.from_numpy(gt_boxes),
-                    'num_box': torch.from_numpy(np.array([num_box]))
-                }
-                if flag:
-                    img.save(os.path.join('../data/tt100k_2021/', 'new_' + path))
-                if 'train' in path:
-                    train_l.append(piece)
-                elif 'test' in path:
-                    test_val_l.append(piece)
-            tes_val_len = len(test_val_l)
-            split = int(np.ceil(tes_val_len * 0.8))
-            test_l = test_val_l[:split]
-            val_l = test_val_l[split:]
-            self.data = {
-                'train': train_l,
-                'test': test_l,
-                'val': val_l
-            }
-
-    def _assign_ids(self):
-        ids = 1
-        self.class_dict = {'bg': 0}
-        for c in self.classes:
-            self.class_dict[c] = ids
-            ids += 1
+            trans(self.dataset_path, self.dataset_path)
 
     def get_loader(self, phase: str, batch_size: int) -> DataLoader:
         """
@@ -133,67 +51,118 @@ class Reader():
         :param batch_size: the batch size of dataloader
         :return: a dataloader for train or test
         """
-        data = self.data[phase]
-        image_set=ImageSet(data)
-        return DataLoader(image_set, batch_size=batch_size, num_workers=16, collate_fn=ImageSet._collate)
+        md = CocoDetection(root=self.dataset_path,
+                           annFile=os.path.join(self.dataset_path, f'annotation_{phase}.json'),
+                           transform=self.com,
+                           target_transform=Coco2target())
+        return DataLoader(md, num_workers=2, batch_size=batch_size,collate_fn=collate)
 
-class ImageSet(VisionDataset):
-    def __init__(self, data):
-        super(ImageSet, self).__init__(root='')
-        self.datas = data
-        self.transform = transforms.Compose([
-            transforms.ToTensor()
-        ])
-        # target_transform=
 
-    def __len__(self):
-        return len(self.datas)
+class Coco2target:
+    def __call__(self, target):
+        objs = target  # ['annotation']
+        boxes = torch.as_tensor([obj['bbox'] for obj in objs]).reshape(-1, 4)
+        boxes[:, 2:] += boxes[:, :2]
 
-    def __getitem__(self, idx: int):
-        data = self.datas[idx]
-        img = Image.open(data['path'])
-        d = copy.deepcopy(data)
-        d['im_data'] = self.transform(img)
-        return d
-
-    @staticmethod
-    def _collate(dicts:List[dict]):
-        # t1 = time.time()
-        # data = [(d['im_data'], d['im_info'], d['gt_boxes'],d['num_box']) for d in dicts]
-        # data = list(zip(*data))
-        r= {
-            'im_data':torch.stack([d['im_data'] for  d in dicts]),
-            'im_info': torch.stack([d['im_info'] for  d in dicts]),
-            'gt_boxes': torch.stack([d['gt_boxes'] for  d in dicts]),
-            'num_box': torch.stack([d['num_box'] for  d in dicts])
+        labels = torch.as_tensor([obj['category_id'] for obj in objs], dtype=torch.int64)
+        target = {
+            'boxes': boxes,
+            'labels': labels
         }
-        # print(time.time()-t1)
-        return r
+        return target
+
+
+def collate(batch):
+    i,t=list(zip(*batch))
+    return list(i),list(t)
+    # print(batch[0])
+    # i, t = tuple(zip(*batch))
+    # return i[0], t[0]
 
 
 if __name__ == '__main__':
+    import torchvision
+
+    print(torch.__version__, torchvision.__version__)
+    from torchvision.datasets import CocoDetection
+    from torchvision.models.detection import FasterRCNN
+    from torchvision.models.detection.rpn import AnchorGenerator
+    from torchvision.ops import MultiScaleRoIAlign
+    from torchvision.models import mobilenet_v2
+    from torchvision.transforms import ToTensor
+    from torch.utils.data.dataloader import DataLoader
+    from torchvision.transforms import functional as F
+    from torch.optim import Adamax
+
+
     class args:
         dataset_name = 'tt100k_2021'
-        dataset_path = '../data/tt100k_2021'
+        dataset_path = '../../data/tt100k_2021'
 
 
     r = Reader(args)
-    md = ImageSet(r.data['train'])
-    dl = PrefetchLoader(md,batch_size=256, num_workers=8, collate_fn=ImageSet._collate)#
-    #
-    import time
 
-    t1 = time.time()
-    t0=t1
-    cnt = 0
-    for d in dl:
-        for k in d:
-            d[k].to('cuda:1')
-        cnt += 1
-        t2=time.time()
-        print( t2- t1, cnt)
-        sys.stdout.flush()
-        t1=t2
-        # if cnt == 15:
-        #     break
-    print(time.time() - t0,cnt)
+    dl = r.get_loader('train', 2)
+    model1 = mobilenet_v2(pretrained=True).features
+    model1.out_channels = 1280
+    anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
+                                       aspect_ratios=((0.5, 1.0, 2.0),))
+    roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
+                                    output_size=7,
+                                    sampling_ratio=2)
+    model = FasterRCNN(model1,
+                       num_classes=len(class_dict),
+                       rpn_anchor_generator=anchor_generator,
+                       box_roi_pool=roi_pooler)
+
+    o = Adamax([p for p in model.parameters() if p.requires_grad], lr=5e6)
+    device='cuda:3'
+    model.to(device)
+    cnt=0
+    for e in range(10):
+        loss_l = []
+        for d in tqdm(dl, desc='train', total=len(dl)):
+            cnt += 1
+            i, t = d
+            for idx in range(len(i)):
+                i[idx] = i[idx].to(device)
+
+            for tt in t:
+                for k in tt:
+                    if isinstance(tt[k], torch.Tensor):
+                        tt[k] = tt[k].to(device)
+            output = model(i, t)
+
+            losses = sum(loss for loss in output.values())
+            loss_l.append(losses.cpu().detach().numpy())
+            o.zero_grad()
+            losses.backward()
+            o.step()
+
+            # if cnt%100==0:
+            #     print(np.mean(loss_l))
+        print('epoch {}: {}'.format(e,np.mean(loss_l)))
+    print('f')
+    # class args:
+    #     dataset_name = 'tt100k_2021'
+    #     dataset_path = '../../data/tt100k_2021'
+    #
+    #
+    # r = Reader(args)
+    # from torchvision.transforms import functional as F
+    #
+    # md = CocoDetection(root=args.dataset_path, annFile=os.path.join(args.dataset_path, 'annotation_val.json')
+    #                    , transform=com, target_transform=Coco2target())
+    # i, t = md.__getitem__(0)
+    # dl = DataLoader(md, num_workers=2, batch_size=256, collate_fn=collate)
+    # cnt = 0
+    # for d in dl:
+    #     i, t = d
+    #     i = i.to('cuda:2')
+    #     for k in t:
+    #         if isinstance(t[k], torch.Tensor):
+    #             t[k] = t[k].to('cuda:2')
+    #     print(torch.cuda.memory_allocated(device='cuda:2') / (1024 ** 3))
+    #     cnt += 1
+    #     if cnt == 1:
+    #         break
