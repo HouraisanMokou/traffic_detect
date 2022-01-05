@@ -59,8 +59,7 @@ class Faster_RCNN(nn.Module):
             feed_dicts['im_data'], feed_dicts['im_info'], feed_dicts['gt_boxes'], feed_dicts['num_box']
 
         feats = self.base(im_data)
-
-        rois = self.rpn(feats,im_info, gt_boxes, num_boxes)
+        rois, rpn_loss_cls, rpn_loss_bbox = self.rpn(feats,im_info, gt_boxes, num_boxes)
 
         if self.training:
             rois_data = self.proposal_target(rois, gt_boxes, num_boxes)
@@ -105,5 +104,3 @@ class Faster_RCNN(nn.Module):
 
         self.cross_entropy=rpn_cross_entropy
         self.loss_box=rpn_loss_bbox
-
-
