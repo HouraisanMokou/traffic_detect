@@ -20,21 +20,25 @@ class _ProposalLayer(nn.Module):
         self._num_anchors = self._anchors.size(0)
         self.args=args
 
-        def forward(self, input):
+    def forward(self, input):
         # rois=self.RPN_proposal((rpn_cls_prob.data,rpn_offsets.data,im_info,cfg_key))
         scores = input[0][:, self._num_anchors:, :, :]
         bbox_deltas = input[1]
         im_info = input[2]
         cfg_key = input[3]
+        if cfg_key == 'TRAIN':
+            pre_nms_topN = 12000
+            post_nums_topN = 2000
+            nms_thresh = 0.7
+            min_size = 8
+        else:
+            pre_nms_topN = 6000
+            post_nums_topN = 300
+            nms_thresh = 0.7
+            min_size = 16
+        batch_size = bbox_deltas.size(0)
 
-        pre_nms_topN = eval(f'self.args.{cfg_key}_RPN_PRE_NMS_TOP_N')
-        post_nums_topN = eval(f'self.args.{cfg_key}_RPN_POST_NMS_TOP_N')
-        nms_thresh = eval(f'self.args.{cfg_key}_RPN_NMS_THRESH')
-        min_size = eval(f'self.args.{cfg_key}_RPN_MIN_SIZE')
-
-        batch_size = bbox_deltas.shape[0]
-
-        feat_height, feat_width = scores.shape[2], scores.shape[3]
+        feat_height, feat_width = scores.size(2), scores.size(3)
         shift_x = np.arange(0, feat_width)*self._feat_stride
         shift_y = np.arange(0, feat_height)*self._feat_stride
 
@@ -45,7 +49,7 @@ class _ProposalLayer(nn.Module):
         shifts = shifts.contiguous().type_as(scores).float()
 
         A=self._num_anchors
-        K=shifts.shape[0]
+        K=shifts.size(0)
 
         self._anchors=self._anchors.type_as(scores)
         anchors=self._anchors.view(1,A,4)+shifts.view(K,1,4)
@@ -61,7 +65,7 @@ class _ProposalLayer(nn.Module):
         
         # clip predicted boxes to image
         proposals=clip_boxes(proposals,im_info,batch_size)
-
+        #
         scores_keep=scores
         proposals_keep=proposals
         _,order=torch.sort(scores_keep,1,True)
