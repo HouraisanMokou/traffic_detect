@@ -19,7 +19,7 @@ class RPN(nn.Module):
         self.din = din  # the depth of input feature map
         self.anchor_scales = [8, 16, 32]
         self.anchor_ratios = [0.5, 1, 2]
-        self.feat_stride = [16, ]
+        self.feat_stride = 16
 
         # in: self.din -> out: 512, kernel_size: (3,3)
         self.RPN_Conv = nn.Conv2d(self.din, 512, 3, 1, 1, bias=True)
@@ -62,7 +62,6 @@ class RPN(nn.Module):
         return x
 
     def forward(self,base_feat,im_info,gt_boxes,num_boxes):
-        print(base_feat.size())
         batch_size=base_feat.size(0)
 
         # return feature map after convrelu layer
