@@ -29,10 +29,10 @@ class anchor_target_layer(nn.Module):
         im_info = input[2]
         num_boxes = input[3]
 
-        height, width = rpn_cls_score.shape[2], rpn_cls_score.shape[3]
+        height, width = rpn_cls_score.size(2), rpn_cls_score.size(3)
 
-        batch_size = gt_boxes.shape[0]
-
+        batch_size = gt_boxes.size(0)
+        feat_height, feat_width = rpn_cls_score.size(2), rpn_cls_score.size(3)
         shift_x = np.arange(0, width)*self._feat_stride
         shift_y = np.arange(0, height)*self._feat_stride
 
@@ -42,7 +42,7 @@ class anchor_target_layer(nn.Module):
         shifts = shifts.contiguous().type_as(rpn_cls_score).float()
 
         A = self._num_anchors
-        K = shifts.shape[0]
+        K = shifts.size(0)
 
         self._anchors = self._anchors.type_as(gt_boxes)
         all_anchors = self._anchors.view(1, A, 4)+shifts.view(K, 1, 4)
@@ -96,8 +96,8 @@ class anchor_target_layer(nn.Module):
             if sum_fg[i] > num_fg:
                 fg_inds = torch.nonzero(labels[i] == 1).view(-1)
                 rand_num = torch.from_numpy(np.random.permutation(
-                    fg_inds.shape[0])).type_as(gt_boxes).int()
-                disable_inds = fg_inds[rand_num[:fg_inds.shape[0]-num_fg]]
+                    fg_inds.size(0))).type_as(gt_boxes).int()
+                disable_inds = fg_inds[rand_num[:fg_inds.size(0)-num_fg]]
                 labels[i][disable_inds] = -1
 
             num_bg = self.args.TRAIN_RPN_BATCHSIZE - \
@@ -108,11 +108,11 @@ class anchor_target_layer(nn.Module):
                 bg_inds = torch.nonzero(labels[i] == 0).view(-1)
 
                 rand_num = torch.from_numpy(np.random.permutation(
-                    bg_inds.shape[0])).type_as(gt_boxes).int()
+                    bg_inds.size(0))).type_as(gt_boxes).int()
                 disable_inds = bg_inds[rand_num[:bg_inds.shape[0]-num_bg]]
                 labels[i][disable_inds] = -1
 
-        offset = torch.arange(0, batch_size)*gt_boxes.shape[1]
+        offset = torch.arange(0, batch_size)*gt_boxes.size(1)
 
         argmax_overlaps = argmax_overlaps + \
             offset.view(batch_size, 1).type_as(argmax_overlaps)
@@ -146,7 +146,7 @@ class anchor_target_layer(nn.Module):
         bbox_targets=bbox_targets.view(batch_size,height,width,A*4).permute(0,3,1,2).contiguous()
         outputs.append(bbox_targets)
 
-        anchors_count=bbox_inside_weights.shape[1]
+        anchors_count=bbox_inside_weights.size(1)
         bbox_inside_weights=bbox_inside_weights.view(batch_size,anchors_count,1).expand(batch_size,anchors_count,4)
 
         bbox_inside_weights=bbox_inside_weights.contiguous().view(batch_size,height,width,4*A).permute(0,3,1,2).contiguous()
