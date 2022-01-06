@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.functional as F
 import torch
@@ -22,12 +23,11 @@ class RPN_PROPOSAL_TARGET(nn.Module):
 
         gt_boxes_append = gt_boxes.new(gt_boxes.size()).zero_()
         gt_boxes_append[:, :, 1:5] = gt_boxes[:, :, :4]
-
         # Include ground-truth boxes in the set of candidate rois
-        all_rois = torch.cat([all_rois, gt_boxes_append], 1)
+        all_rois = torch.cat((all_rois,gt_boxes_append), 1)
 
         num_images = 1
-        rois_per_image = int(128 / num_images)
+        rois_per_image = int(128 / num_images) # training batch size = 128
         fg_rois_per_image = int(np.round(0.25 * rois_per_image))
         fg_rois_per_image = 1 if fg_rois_per_image == 0 else fg_rois_per_image
 
@@ -89,7 +89,7 @@ class RPN_PROPOSAL_TARGET(nn.Module):
         offset = torch.arange(0, batch_size) * gt_boxes.size(1)
         offset = offset.view(-1, 1).type_as(gt_assignment) + gt_assignment
 
-        labels = gt_boxes[:, :, 4].contiguous().view(-1).index((offset.view(-1),)).view(batch_size, -1)
+        labels = gt_boxes[:, :, 4].contiguous().view(-1)[(offset.view(-1),)].view(batch_size, -1)
 
         labels_batch = labels.new(batch_size, rois_per_image).zero_()
         rois_batch = all_rois.new(batch_size, rois_per_image, 5).zero_()
@@ -100,8 +100,7 @@ class RPN_PROPOSAL_TARGET(nn.Module):
             fg_inds = torch.nonzero(max_overlaps[i] >= 0.5).view(-1)
             fg_num_rois = fg_inds.numel()
 
-            bg_inds = torch.nonzero((max_overlaps[i] < 0.5) &
-                                        (max_overlaps[i] >= 0.1)).view(-1)
+            bg_inds = torch.nonzero((max_overlaps[i] < 0.5) & (max_overlaps[i] >=0.1)).view(-1)
             bg_num_rois = bg_inds.numel()
 
             if fg_num_rois > 0 and bg_num_rois > 0:
