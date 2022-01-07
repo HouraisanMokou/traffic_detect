@@ -1,27 +1,3 @@
-"""ROIPooling function and kernel
-
-Modified work:
--------------------------------------------------------------------------------
-Copyright (c) 2019 Victor Escorcia
--------------------------------------------------------------------------------
-
-Original from work of _roipooling_kernel and
-_roipooling_kernel_backward_grad_input:
--------------------------------------------------------------------------------
-Copyright (c) 2015 Preferred Infrastructure, Inc.
-Copyright (c) 2015 Preferred Networks, Inc.
-Licensed under The MIT License [see chainer/LICENSE for details]
--------------------------------------------------------------------------------
-
-First version of CUDA kernel comes from:
--------------------------------------------------------------------------------
-Fast R-CNN
-Copyright (c) 2015 Microsoft
-Licensed under The MIT License [see fast-rcnn/LICENSE for details]
-Written by Ross Girshick
--------------------------------------------------------------------------------
-"""
-
 import torch
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
@@ -175,29 +151,6 @@ __global__ void roi_pooling2d_backward_grad_input_kernel(
 
 
 class ROIPooling2d(Function):
-    """Spatial Region of Interest (ROI) pooling function.
-
-    This function acts similarly to :class:`~pytorch.nn.MaxPool2d`, but
-    it computes the maximum of input spatial patch for each channel
-    with the region of interest.
-
-    See the original paper proposing ROIPooling:
-    `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_.
-
-    Args:
-        x (~pytorch.autograd.Variable): Input variable. The shape is expected
-            to be 4 dimentional: (n: batch, c: channel, h, height, w: width).
-        rois (~pytorch.autograd.Variable): Input roi variable. The shape is
-            expected to be (m: num-rois, 5), and each roi is set as below:
-            (batch_index, x_min, y_min, x_max, y_max).
-        output_size (int or tuple): the target output size of the image of the
-            form H x W. Can be a tuple (H, W) or a single number H for a square
-            image H x H.
-        spatial_scale (float): scale of the rois if resized.
-    Returns:
-        `~pytorch.autograd.Variable`: Output variable.
-    """
-
     @staticmethod
     def forward(self, input, rois, output_size=(7, 7), spatial_scale=1.0):
         self.output_h, self.output_w = output_size
@@ -263,35 +216,10 @@ class ROIPooling2d(Function):
 
 
 def roi_pooling_2d(input, rois, output_size=(7, 7), spatial_scale=1.0):
-    r"""Applies a 2D ROI pooling over an input signal composed of several input
-    planes and a set of regions parametrized as indices and bounding boxes
-
-    See :class:`~ROIPooling2d` for details and output shape.
-
-    Args:
-        output_size (int or tuple): the target output size of the image of the
-            form H x W. Can be a tuple (H, W) or a single number H for a square
-            image H x H.
-        spatial_scale (float): scale of the rois if resized.
-    """
     return ROIPooling2d.apply(input, rois, output_size, spatial_scale)
 
 
 def roi_pooling_2d_pytorch(input, rois, output_size=(7, 7), spatial_scale=1.0):
-    """Spatial Region of Interest (ROI) pooling function in pure pytorch/python
-
-    This function acts similarly to `~roi_pooling_2d`, but performs a python
-    loop over ROI. Note that this is not a direct replacement of
-    `~roi_pooling_2d` (viceversa).
-
-    See :function:`~roi_pooling_2d` for details and output shape.
-
-    Args:
-        output_size (int or tuple): the target output size of the image of the
-            form H x W. Can be a tuple (H, W) or a single number H for a square
-            image H x H.
-        spatial_scale (float): scale of the rois if resized.
-    """
     assert rois.dim() == 2
     assert rois.size(1) == 5
     output = []
